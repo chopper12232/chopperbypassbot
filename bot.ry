@@ -1,0 +1,56 @@
+import os
+import asyncio
+from telethon import TelegramClient, events
+
+# Берём данные из Environment Variables на Render
+API_ID = int(os.environ.get("API_ID", 29666822))
+API_HASH = os.environ.get("API_HASH", "b6a8c9d0e1f2a3b4c5d6e7f8a9b0c1d2")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "7597650548:AAFFDOmUgNXqGz7VBNcW_xHj315mZq589QQ")
+PHONE = os.environ.get("PHONE", "+447407898803")
+OTHER_BOT = os.environ.get("OTHER_BOT", "@getkey")
+
+# Клиент юзербота (от чьего имени запрашиваем)
+user_client = TelegramClient("user_session", API_ID, API_HASH)
+# Клиент основного бота (который отвечает пользователю)
+bot_client = TelegramClient("bot_session", API_ID, API_HASH)
+
+# Очередь ожидающих пользователей: {user_id_кто_ждет: timestamp}
+pending_requests = []
+
+@bot_client.on(events.NewMessage(pattern=r'/start'))
+async def start_handler(event):
+    await event.respond(
+        "🤖 **Что умеет этот бот?** \n\n"
+        "🕓 **Самый быстрый** по получению ключа или обходу ссылок 🔗\n\n"
+        "ℹ️ Просто отправь сюда ссылку!"
+    )
+
+@bot_client.on(events.NewMessage)
+async def handle_user_link(event):
+    if event.is_private and event.text and "http" in event.text:
+        pending_requests.append(event.chat_id)
+        await event.reply("⏳ Ищу ключ...")
+        # Пересылаем ссылку в сторонний бот от имени аккаунта
+        await user_client.send_message(OTHER_BOT, event.text)
+
+@user_client.on(events.NewMessage(chats=OTHER_BOT))
+async def handle_key_response(event):
+    if pending_requests:
+        target_user = pending_requests.pop(0)
+        await bot_client.send_message(target_user, f"🔑 Ключ:\n{event.text}")
+
+async def main():
+    print("✅ Подключаем аккаунт...")
+    await user_client.start(phone=PHONE)
+    
+    print("✅ Подключаем бота...")
+    await bot_client.start(bot_token=BOT_TOKEN)
+    
+    print("✅ Бот запущен!")
+    await asyncio.gather(
+        user_client.run_until_disconnected(),
+        bot_client.run_until_disconnected()
+    )
+
+if __name__ == "__main__":
+    asyncio.run(main())
