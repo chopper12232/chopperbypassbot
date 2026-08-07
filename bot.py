@@ -76,7 +76,7 @@ async def handle_key_response(event):
         sender = await event.get_sender()
         if sender and sender.username == OTHER_BOT:
             message_text = event.text
-           if event.reply_markup and not message_text:
+            if event.reply_markup and not message_text:
                 for row in event.reply_markup.rows:
                     for button in row.buttons:
                         message_text += f"\nКнопка: {button.text}"
