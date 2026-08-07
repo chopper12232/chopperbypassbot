@@ -1,10 +1,9 @@
 import os
 import asyncio
 from telethon import TelegramClient, events
-
 # Берём данные из Environment Variables на Render
-API_ID = int(os.environ.get("API_ID", 29666822))
-API_HASH = os.environ.get("API_HASH", "b6a8c9d0e1f2a3b4c5d6e7f8a9b0c1d2")
+API_ID = int(os.environ.get("API_ID", 2040))
+API_HASH = os.environ.get("API_HASH", "b18441a1ff607e10a989891a5462e627")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "7597650548:AAFFDOmUgNXqGz7VBNcW_xHj315mZq589QQ")
 PHONE = os.environ.get("PHONE", "+447407898803")
 OTHER_BOT = os.environ.get("OTHER_BOT", "@getkey")
