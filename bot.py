@@ -45,15 +45,6 @@ async def handle_user_link(event):
         # Пересылаем ссылку в сторонний бот от имени аккаунта
         await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
 
-@user_client.on(events.NewMessage(chats=OTHER_BOT))
-async def handle_key_response(event):
-    # Берем текст или подпись под картинкой
-    response_text = event.text or event.message.caption or ""
-    
-    # Игнорируем инструкции стороннего бота
-    if "Как использовать" in response_text or "Используйте" in response_text:
-        return
-
 # Ищем ключ, если он есть
     if "FREE_" in response_text and pending_requests:
         try:
@@ -65,6 +56,8 @@ async def handle_key_response(event):
             
             target_user = pending_requests.pop(0)
             await bot_client.send_message(target_user, final_key)
+        except Exception as e:
+            print(f"Ошибка парсинга ключа: {e}")
         except Exception as e:
             print(f"Ошибка парсинга ключа: {e}")
  
