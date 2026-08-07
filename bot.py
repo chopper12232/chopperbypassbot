@@ -35,20 +35,23 @@ async def start_handler(event):
     if event.is_private:
         await event.respond("Привет! Пришли ссылку, я пришлю ключ.")
 
-# Обработчик входящих ссылок от пользователей с нажатием кнопки
+# Обработчик входящих ссылок от пользователей
 @bot_client.on(events.NewMessage)
 async def handle_user_link(event):
     global last_user_id
     if event.is_private and event.text and "http" in event.text:
         last_user_id = event.chat_id
         print(f"[LOG] Получена ссылка от пользователя ID: {last_user_id}")
+        
+        # Статусное сообщение со смайликом тг прем
         status_msg = await event.reply("<tg-emoji emoji-id=\"5278305362703835500\">🔗</tg-emoji> <b>Обрабатываю ссылку...</b>", parse_mode='html')
+        
         try:
             # 1. Отправляем команду /bypass боту
             await user_client.send_message(OTHER_BOT, "/bypass")
             
-            # Пауза, чтобы бот успел прислать ответ с кнопкой
-            await asyncio.sleep(2)
+            # Короткая пауза для появления кнопки
+            await asyncio.sleep(1)
 
             # 2. Ищем сообщение от бота с кнопкой и нажимаем её
             async for message in user_client.iter_messages(OTHER_BOT, limit=3):
@@ -57,10 +60,10 @@ async def handle_user_link(event):
                     print(f"[LOG] Кнопка успешно нажата!")
                     break
 
-            # Небольшая пауза после нажатия кнопки, чтобы бот переключился в режим приема ссылки
-            await asyncio.sleep(1.5)
+            # Пауза перед отправкой самой ссылки
+            await asyncio.sleep(1)
 
-            # 3. Отправляем саму ссылку следующим сообщением
+            # 3. Отправляем ссылку чужому боту
             await user_client.send_message(OTHER_BOT, event.text)
             print(f"[LOG] Ссылка успешно отправлена чужому боту.")
 
