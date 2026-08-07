@@ -113,7 +113,7 @@ async def handle_key_response(event):
 # --- Запуск клиента ---
 async def main():
   print("Инициализация Telegram клиента...")
-  await user_client.start()
+  await user_client.start(phone=PHONE)
   print("Бот успешно запущен и работает!")
   await user_client.run_until_disconnected()
 
