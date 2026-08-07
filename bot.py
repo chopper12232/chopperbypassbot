@@ -4,7 +4,7 @@ from flask import Flask
 import asyncio
 from telethon import TelegramClient, events
 
-app = Flask(__name__)
+app = Flask(name)
 
 @app.route('/')
 def home():
@@ -21,7 +21,7 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PHONE = os.environ.get("PHONE", "")
 
-OTHER_BOT = "getkey"
+OTHER_BOT = "robloxbypass"  # Юзернейм чужого бота
 pending_requests = []
 
 user_client = TelegramClient("user_session", API_ID, API_HASH)
@@ -38,28 +38,28 @@ async def handle_user_link(event):
         pending_requests.append(event.chat_id)
         await event.reply("Ищу ключ...")
         try:
-            print(f"DEBUG: Пытаюсь отправить ссылку боту {OTHER_BOT}...")
             await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
-            print("DEBUG: Сообщение успешно отправлено!")
+            print("Ссылка успешно отправлена чужому боту!")
         except Exception as e:
-            print(f"DEBUG: Ошибка при отправке: {e}")
+            print(f"Ошибка отправки: {e}")
             await event.reply(f"Ошибка при отправке: {e}")
 
 @user_client.on(events.NewMessage)
 async def handle_key_response(event):
-    sender = await event.get_sender()
-    if sender and getattr(sender, 'username', '').lower() == OTHER_BOT:
-        print(f"DEBUG: Получен ответ от {OTHER_BOT}: {event.text[:50]}...")
-        if "FREE_" in event.text and pending_requests:
+    # Ловим сообщения из ЛС от любых ботов, если мы ждем ключ
+    if event.is_private and pending_requests:
+        sender = await event.get_sender()
+        # Проверяем, что сообщение от бота (просто на всякий случай)
+        if sender and sender.bot:
+            print(f"Получен ответ от бота, пересылаю пользователю...")
             target_user = pending_requests.pop(0)
             await bot_client.send_message(target_user, event.text)
-            print("DEBUG: Ключ успешно отправлен пользователю!")
 
 async def main():
     await user_client.start(phone=PHONE)
     await bot_client.start(bot_token=BOT_TOKEN)
-    print("DEBUG: Бот запущен и готов к работе!")
+    print("Бот запущен!")
     await asyncio.gather(user_client.run_until_disconnected(), bot_client.run_until_disconnected())
 
-if __name__ == "__main__":
+if name == "main":
     asyncio.run(main())
