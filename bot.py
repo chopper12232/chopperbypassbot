@@ -54,17 +54,19 @@ async def handle_key_response(event):
     if "Как использовать" in response_text or "Используйте" in response_text:
         return
 
-    # Ищем ключ, если он есть
+# Ищем ключ, если он есть
     if "FREE_" in response_text and pending_requests:
-        # Разбиваем строку, чтобы найти кусок с FREE_
-        # Мы берем все, что идет после FREE_, до ближайшего пробела или конца строки
-        key_part = response_text.split("FREE_")[1].split()[0]
-        final_key = "FREE_" + key_part
-        
-        target_user = pending_requests.pop(0)
-        # Отправляем пользователю ТОЛЬКО чистый ключ
-        await bot_client.send_message(target_user, final_key)
-
+        try:
+            # Отрезаем всё до FREE_ и забираем кусок до слова "Потребовалось"
+            part = response_text.split("FREE_")[1]
+            key_raw = part.split("Потребовалось")[0]
+            # Убираем лишние пробелы и переносы строк
+            final_key = "FREE_" + key_raw.strip()
+            
+            target_user = pending_requests.pop(0)
+            await bot_client.send_message(target_user, final_key)
+        except Exception as e:
+            print(f"Ошибка парсинга ключа: {e}")
  
 async def main():
     print("✅ Подключаем аккаунт...")
