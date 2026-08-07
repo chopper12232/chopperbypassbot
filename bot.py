@@ -87,13 +87,23 @@ async def handle_key_response(event):
             print(f"[LOG] Пойман ответ от бота! Текст: {message_text}")
             
             if last_user_id:
-                try:
-                    await bot_client.send_message(last_user_id, message_text)
-                    print(f"[LOG] Ключ успешно отправлен пользователю {last_user_id}")
-                except Exception as e:
-                    print(f"[LOG ERROR] Не удалось отправить ключ: {e}")
-                last_user_id = None
-
+             # ... (начало функции остается прежним)
+            import re
+            key_match = re.search(r'FREE_[a-zA-Z0-9]+', message_text)
+            
+            if key_match:
+                final_key = key_match.group(0)
+                # ТВОЙ ДИЗАЙН (меняй смайлики как хочешь):
+                custom_message = (
+                    "🔥 Успешный обход!\n\n"
+                    "🔑 Твой ключ:\n"
+                    f"{final_key}\n\n"
+                    "🚀 *Ваш сервис*"
+                )
+                await bot_client.send_message(last_user_id, custom_message, parse_mode='md')
+            else:
+                # Если вдруг формат поменяется и ключ не найдет, отправляем оригинал
+                await bot_client.send_message(last_user_id, "Вот ответ:\n" + message_text)
 async def main():
     await user_client.start(phone=PHONE)
     await bot_client.start(bot_token=BOT_TOKEN)
