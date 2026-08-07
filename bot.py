@@ -59,8 +59,8 @@ async def handle_key_response(event):
 
     if "FREE" in response_text and pending_requests:
         try:
-            part = responsetext.split("FREE")[1]
-key_raw = part.split("Потребовалось")[0]
+responsetext.split("FREE")[1]
+            key_raw = part.split("Потребовалось")[0]
             finalkey = "FREE" + key_raw.strip()
 
             target_user = pending_requests.pop(0)
