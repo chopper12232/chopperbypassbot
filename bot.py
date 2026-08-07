@@ -25,40 +25,42 @@ PHONE = "+447407898803"
 OTHER_BOT = "KrevetkascriptsBy_Bot"
 last_user_id = None
 
-# Клиенты Телеграм
-user_client = TelegramClient("user_session", API_ID, API_HASH)
-bot_client = TelegramClient("bot_session", API_ID, API_HASH)
+# Клиент Telegram (работаем через user_client)
+user_client = TelegramClient('user_session', API_ID, API_HASH)
 
-# Обработчик команды /start для твоего основного бота
-@bot_client.on(events.NewMessage(pattern=r'/start'))
-async def start_handler(event):
-    if event.is_private:
-        await event.respond("Привет! Пришли ссылку, я пришлю ключ.")
-
-# Обработчик входящих ссылок от пользователей
-@bot_client.on(events.NewMessage)
+# Обработчик входящих ссылок от тебя
+@user_client.on(events.NewMessage(incoming=True))
 async def handle_user_link(event):
     global last_user_id
     if event.is_private and event.text and "http" in event.text:
         last_user_id = event.chat_id
-        print(f"[LOG] Получена ссылка от пользователя ID: {last_user_id}")
-        
-        # Статусное сообщение со смайликом тг прем
-        status_msg = await event.reply("<tg-emoji emoji-id=\"5278305362703835500\">🔗</tg-emoji> <b>Обрабатываю ссылку...</b>", parse_mode='html')
+        print(f"[LOG] Получена ссылка от пользователя: {event.text}")
         
         try:
             # 1. Отправляем команду /bypass боту
             await user_client.send_message(OTHER_BOT, "/bypass")
+            print(f"[LOG] Команда /bypass отправлена")
             
-            # Короткая пауза для появления кнопки
-            await asyncio.sleep(1)
+            # Пауза для появления кнопки
+            await asyncio.sleep(1.5)
 
-            # 2. Ищем сообщение от бота с кнопкой и нажимаем её
+            # 2. Ищем сообщение с кнопкой и нажимаем её
+            clicked = False
             async for message in user_client.iter_messages(OTHER_BOT, limit=3):
                 if message.buttons:
                     await message.click(0)
                     print(f"[LOG] Кнопка успешно нажата!")
+                    clicked = True
                     break
+            
+            if not clicked:
+                print(f"[LOG WARNING] Кнопка не найдена, повтор...")
+                await asyncio.sleep(1)
+                async for message in user_client.iter_messages(OTHER_BOT, limit=3):
+                    if message.buttons:
+                        await message.click(0)
+                        print(f"[LOG] Кнопка нажата со второй попытки!")
+                        break
 
             # Пауза перед отправкой самой ссылки
             await asyncio.sleep(1)
@@ -67,8 +69,11 @@ async def handle_user_link(event):
             await user_client.send_message(OTHER_BOT, event.text)
             print(f"[LOG] Ссылка успешно отправлена чужому боту.")
 
+            # 4. Отправляем статус со смайликом в самом конце
+            await event.reply("<tg-emoji emoji-id=\"5278305362703835500\">🔗</tg-emoji> <b>Ссылка обрабатывается!</b>", parse_mode='html')
+
         except Exception as e:
-            print(f"[LOG ERROR] Ошибка при взаимодействии с ботом: {e}")
+            print(f"[LOG ERROR] Ошибка: {e}")
             await event.reply(f"Ошибка при отправке: {e}")
             
 # Исправленный перехват ответа
