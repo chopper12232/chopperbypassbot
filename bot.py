@@ -48,7 +48,7 @@ async def handle_user_link(event):
             await user_client.send_message(OTHER_BOT, "/bypass")
             
            # Пауза, чтобы бот успел прислать ответ с кнопкой
-    await asyncio.sleep(2)
+        await asyncio.sleep(2)
 
     # 2. Ищем сообщение от бота с кнопкой и нажимаем её
     async for message in user_client.iter_messages(OTHER_BOT, limit=3):
