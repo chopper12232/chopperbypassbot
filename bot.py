@@ -42,7 +42,7 @@ async def handle_user_link(event):
     if event.is_private and event.text and "http" in event.text:
         last_user_id = event.chat_id
         print(f"[LOG] Получена ссылка от пользователя ID: {last_user_id}")
-        await event.reply("Ищу ключ...")
+        status_msg = await event.reply("<tg-emoji emoji-id=\"5278305362703835500\">🔗</tg-emoji> <b>Обрабатываю ссылку...</b>", parse_mode='html')
         try:
             # 1. Отправляем команду /bypass боту
             await user_client.send_message(OTHER_BOT, "/bypass")
