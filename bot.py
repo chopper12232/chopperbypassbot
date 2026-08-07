@@ -21,7 +21,7 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PHONE = os.environ.get("PHONE", "")
 
-OTHER_BOT = "robloxbypass"
+OTHER_BOT = "getkey"
 pending_requests = []
 
 user_client = TelegramClient("user_session", API_ID, API_HASH)
