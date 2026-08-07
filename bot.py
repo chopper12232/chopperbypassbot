@@ -21,7 +21,7 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PHONE = os.environ.get("PHONE", "")
 
-OTHER_BOT = "getkey"
+OTHER_BOT = "KrevetkascriptsBy_Bot"
 last_user_id = None
 
 user_client = TelegramClient("user_session", API_ID, API_HASH)
@@ -40,7 +40,7 @@ async def handle_user_link(event):
         print(f"[LOG] Получена ссылка от пользователя ID: {last_user_id}")
         await event.reply("Ищу ключ...")
         try:
-            await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
+            await user_client.send_message(OTHER_BOT, event.text)
             print(f"[LOG] Успешно отправлено чужому боту от имени вирт-аккаунта.")
         except Exception as e:
             print(f"[LOG ERROR] Ошибка отправки чужому боту: {e}")
