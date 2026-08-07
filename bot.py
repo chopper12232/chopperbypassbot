@@ -80,8 +80,7 @@ async def handle_key_response(event):
                             message_text += f"\nКнопка: {button.text}"
             
             print(f"[LOG] Пойман ответ от бота! Текст: {message_text}")
-            
-          if last_user_id:
+            if last_user_id:
                 import re
                 key_match = re.search(r'FREE_[a-zA-Z0-9]+', message_text)
                 if key_match:
