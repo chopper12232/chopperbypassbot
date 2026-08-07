@@ -16,8 +16,8 @@ def run_flask():
 threading.Thread(target=run_flask, daemon=True).start()
 
 # Данные для авторизации
-API_ID = 3050
-API_HASH = "b18651alff607e10a989891a5462e627"
+API_ID = 2496
+API_HASH = "8da85b0d5bfe62527e5b244c209159c3"
 BOT_TOKEN = "7597650548:AAFFDOmUgNXqGz7VBNcW_xHj315mZq589QQ"
 PHONE = "+447407898803"
 
