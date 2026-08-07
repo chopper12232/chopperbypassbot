@@ -33,9 +33,8 @@ pending_requests = []
 @bot_client.on(events.NewMessage(pattern=r'/start'))
 async def start_handler(event):
     await event.respond(
-        "🤖 **Что умеет этот бот?** \n\n"
-        "🕓 **Самый быстрый** по получению ключа или обходу ссылок 🔗\n\n"
-        "ℹ️ Просто отправь сюда ссылку!"
+        "👋 **Привет! Я бот для обхода ссылок.\n\n"
+        "⚡ Пришли мне ссылку, и я моментально пришлю тебе ключ!"
     )
 
 @bot_client.on(events.NewMessage)
@@ -50,7 +49,14 @@ async def handle_user_link(event):
 async def handle_key_response(event):
     if pending_requests:
         target_user = pending_requests.pop(0)
-        await bot_client.send_message(target_user, f"🔑 Ключ:\n{event.text}")
+        text = event.text
+        if "Как использовать:" in text and "http" not in text:
+            await bot_client.send_message(
+                target_user, 
+                "❌ Не удалось получить ключ. Попробуй отправь ссылку ещё раз."
+            )
+        else:
+            await bot_client.send_message(target_user, text)
 
 async def main():
     print("✅ Подключаем аккаунт...")
