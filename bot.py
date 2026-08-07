@@ -21,7 +21,7 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PHONE = os.environ.get("PHONE", "")
 
-OTHER_BOT = "robloxbypass"
+OTHER_BOT = "getkey"
 
 # Переменная для хранения ID пользователя, который последним запросил ключ
 last_user_id = None
