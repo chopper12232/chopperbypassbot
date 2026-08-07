@@ -47,11 +47,17 @@ async def handle_user_link(event):
 
 @user_client.on(events.NewMessage(chats=OTHER_BOT))
 async def handle_key_response(event):
+    text = event.text or ""
+    
+    # Если сторонний бот прислал инструкцию или промежуточный статус — игнорируем
+    if "Как использовать" in text or "Используйте" in text:
+        return
+
+    # Если пришёл реальный ключ или результат
     if pending_requests:
         target_user = pending_requests.pop(0)
-        # Отправляем ответ стороннего бота пользователю как есть
-        await bot_client.send_message(target_user, event.text)
-
+        await bot_client.send_message(target_user, text)
+        
 async def main():
     print("✅ Подключаем аккаунт...")
     await user_client.start(phone=PHONE)
