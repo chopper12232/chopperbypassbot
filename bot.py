@@ -81,19 +81,23 @@ async def handle_key_response(event):
             
             print(f"[LOG] Пойман ответ от бота! Текст: {message_text}")
             
-            if last_user_id:
+          if last_user_id:
                 import re
                 key_match = re.search(r'FREE_[a-zA-Z0-9]+', message_text)
                 if key_match:
                     final_key = key_match.group(0)
-                    custom_message = (
-                        "🔥 Успешный обход!\n\n"
-                        "🔑 Твой ключ:\n"
-                        f"{final_key}\n\n"
-                        "🚀 *Ваш сервис*"
+                   custom_message = (
+                        "<tg-emoji emoji-id=\"5278602437001767574\">🔒</tg-emoji> <b>Успешный обход!</b>\n\n"
+                        "<tg-emoji emoji-id=\"5278602437001767574\">🔒</tg-emoji> <b>Твой ключ:</b>\n"
+                        f"<code>{final_key}</code>\n\n"
+                        "<tg-emoji emoji-id=\"5278305362703835500\">🔗</tg-emoji> <i>Обрабатываю ссылку...</i>\n"
+                        "<tg-emoji emoji-id=\"5206476089127372379\">⭐</tg-emoji> <b>Ваш сервис</b>"
                     )
-                    await bot_client.send_message(last_user_id, custom_message, parse_mode='md')
-                    
+                    await bot_client.send_message(last_user_id, custom_message, parse_mode='html')
+                else:
+                    await bot_client.send_message(last_user_id, "Вот ответ:\n" + message_text)
+                last_user_id = None
+              
 async def main():
     await user_client.start(phone=PHONE)
     await bot_client.start(bot_token=BOT_TOKEN)
