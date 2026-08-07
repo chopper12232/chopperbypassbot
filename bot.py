@@ -1,40 +1,40 @@
 import os
 import threading
 from flask import Flask
+import asyncio
+from telethon import TelegramClient, events
 
-app = Flask('')
+Flask-сервер, чтобы Render не усыплял бота
+app = Flask(name)
 
 @app.route('/')
 def home():
     return "Bot is alive!"
 
-def run():
+def run_flask():
     port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host="0.0.0.0", port=port)
 
-threading.Thread(target=run, daemon=True).start()
-import asyncio
-from telethon import TelegramClient, events
-# Берём данные из Environment Variables на Render
-API_ID = int(os.environ.get("API_ID", 2040))
-API_HASH = os.environ.get("API_HASH", "b18441a1ff607e10a989891a5462e627")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "7597650548:AAFFDOmUgNXqGz7VBNcW_xHj315mZq589QQ")
-PHONE = os.environ.get("PHONE", "+447407898803")
-OTHER_BOT = os.environ.get("OTHER_BOT", "@getkey")
+Запускаем Flask в отдельном потоке
+threading.Thread(target=run_flask, daemon=True).start()
 
-# Клиент юзербота (от чьего имени запрашиваем)
-user_client = TelegramClient("user_session", API_ID, API_HASH)
-# Клиент основного бота (который отвечает пользователю)
-bot_client = TelegramClient("bot_session", API_ID, API_HASH)
+Конфигурация Telethon
+API_ID = int(os.environ.get("API_ID", 0))
+API_HASH = os.environ.get("API_HASH", "")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+PHONE = os.environ.get("PHONE", "")
 
-# Очередь ожидающих пользователей: {user_id_кто_ждет: timestamp}
+OTHER_BOT = "@RobloxBypass"
 pending_requests = []
+
+user_client = TelegramClient("user_session", API_ID, API_HASH)
+bot_client = TelegramClient("bot_session", API_ID, API_HASH)
 
 @bot_client.on(events.NewMessage(pattern=r'/start'))
 async def start_handler(event):
     await event.respond(
-        "👋 **Привет! Я бот для обхода ссылок.\n\n"
-        "⚡ Пришли мне ссылку, и я моментально пришлю тебе ключ!"
+        "👋 Привет! Я бот для обхода ссылок.\n\n"
+        "⚡️ Пришли мне ссылку, и я моментально пришлю тебе ключ!"
     )
 
 @bot_client.on(events.NewMessage)
@@ -42,37 +42,50 @@ async def handle_user_link(event):
     if event.is_private and event.text and "http" in event.text:
         pending_requests.append(event.chat_id)
         await event.reply("⏳ Ищу ключ...")
-        # Пересылаем ссылку в сторонний бот от имени аккаунта
-        await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
-
-# Ищем ключ, если он есть
-    if "FREE_" in response_text and pending_requests:
         try:
-            # Отрезаем всё до FREE_ и забираем кусок до слова "Потребовалось"
-            part = response_text.split("FREE_")[1]
+            await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
+        except Exception as e:
+            print(f"Ошибка отправки в сторонний бот: {e}")
+
+@user_client.on(events.NewMessage)
+async def handle_key_response(event):
+    sender = await event.get_sender()
+    if not sender or getattr(sender, 'username', '') != "RobloxBypass":
+        return
+
+    response_text = event.text or event.message.caption or ""
+    print(f"Пойман ответ от стороннего бота: {response_text}")
+
+    if not response_text:
+        return
+
+    if "Как использовать" in response_text or "Используйте" in responsetext:
+        return
+
+    if "FREE" in response_text and pending_requests:
+        try:
+part = responsetext.split("FREE")[1]
             key_raw = part.split("Потребовалось")[0]
-            # Убираем лишние пробелы и переносы строк
-            final_key = "FREE_" + key_raw.strip()
-            
+            finalkey = "FREE" + key_raw.strip()
+
             target_user = pending_requests.pop(0)
             await bot_client.send_message(target_user, final_key)
+            print(f"Успешно отправлено пользователю {target_user} ключ: {final_key}")
         except Exception as e:
             print(f"Ошибка парсинга ключа: {e}")
-        except Exception as e:
-            print(f"Ошибка парсинга ключа: {e}")
- 
+
 async def main():
-    print("✅ Подключаем аккаунт...")
+    print("🟩 Подключаем аккаунт...")
     await user_client.start(phone=PHONE)
-    
-    print("✅ Подключаем бота...")
+
+    print("🟩 Подключаем бота...")
     await bot_client.start(bot_token=BOT_TOKEN)
-    
-    print("✅ Бот запущен!")
+
+    print("🚀 Бот запущен и работает!")
     await asyncio.gather(
         user_client.run_until_disconnected(),
         bot_client.run_until_disconnected()
     )
 
-if __name__ == "__main__":
-    asyncio.run(main())
+if name == "main":
+    asyncio.run(main()) 
