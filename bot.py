@@ -47,10 +47,10 @@ async def handle_user_link(event):
 
 @user_client.on(events.NewMessage(chats=OTHER_BOT))
 async def handle_key_response(event):
-    # Достаем текст, даже если он пришел под картинкой (caption)
+    # Достаем текст из обычного сообщения ИЛИ из подписи к фото (caption)
     response_text = event.text or event.message.caption or ""
     
-    # Пропускаем инструкции
+    # Игнорируем инструкции
     if "Как использовать" in response_text or "Используйте" in response_text:
         return
 
@@ -58,11 +58,7 @@ async def handle_key_response(event):
         target_user = pending_requests.pop(0)
         await bot_client.send_message(target_user, response_text)
 
-    # Если пришёл реальный ключ или результат
-    if pending_requests:
-        target_user = pending_requests.pop(0)
-        await bot_client.send_message(target_user, text)
-        
+ 
 async def main():
     print("✅ Подключаем аккаунт...")
     await user_client.start(phone=PHONE)
