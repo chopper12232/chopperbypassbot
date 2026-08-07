@@ -3,7 +3,6 @@ from telethon import TelegramClient, events
 from flask import Flask
 import threading
 
-# Настройка веб-сервера для удержания хостинга
 app = Flask(__name__)
 
 @app.route('/')
@@ -11,10 +10,11 @@ def home():
     return "Bot is running!"
 
 def run_flask():
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
 
-threading.Thread(target=run_flask, daemon=True).start()
-
+# Запускаем Flask в отдельном потоке СРАЗУ
+flask_thread = threading.Thread(target=run_flask, daemon=True)
+flask_thread.start()
 # Данные для авторизации
 API_ID = 2496
 API_HASH = "8da85b0d5bfe62527e5b244c209159c3"
@@ -107,14 +107,10 @@ async def handle_key_response(event):
                 last_user_id = None
               
 async def main():
-    print("Запуск клиента...")
+    print("Инициализация Telegram клиента...")
     await user_client.start(phone=PHONE)
-    print("Всё запущено, клиент активен.")
-    await asyncio.gather(user_client.run_until_disconnected())
+    print("Успех! Телеграм клиент запущен и слушает сообщения.")
+    await user_client.run_until_disconnected()
 
 if __name__ == "__main__":
-    import asyncio
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        pass
+    asyncio.run(main())
