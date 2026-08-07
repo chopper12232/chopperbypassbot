@@ -47,27 +47,27 @@ async def handle_user_link(event):
             # 1. Отправляем команду /bypass боту
             await user_client.send_message(OTHER_BOT, "/bypass")
             
-           # Пауза, чтобы бот успел прислать ответ с кнопкой
-        await asyncio.sleep(2)
+            # Пауза, чтобы бот успел прислать ответ с кнопкой
+            await asyncio.sleep(2)
 
-    # 2. Ищем сообщение от бота с кнопкой и нажимаем её
-    async for message in user_client.iter_messages(OTHER_BOT, limit=3):
-        if message.buttons:
-            await message.click(0)
-            print(f"[LOG] Кнопка успешно нажата!")
-            break
+            # 2. Ищем сообщение от бота с кнопкой и нажимаем её
+            async for message in user_client.iter_messages(OTHER_BOT, limit=3):
+                if message.buttons:
+                    await message.click(0)
+                    print(f"[LOG] Кнопка успешно нажата!")
+                    break
 
-    # Небольшая пауза после нажатия кнопки, чтобы бот переключился в режим приема ссылки
-    await asyncio.sleep(1.5)
+            # Небольшая пауза после нажатия кнопки, чтобы бот переключился в режим приема ссылки
+            await asyncio.sleep(1.5)
 
-    # 3. Отправляем саму ссылку следующим сообщением
-    await user_client.send_message(OTHER_BOT, event.text)
-    print(f"[LOG] Ссылка успешно отправлена чужому боту.")
-            
+            # 3. Отправляем саму ссылку следующим сообщением
+            await user_client.send_message(OTHER_BOT, event.text)
+            print(f"[LOG] Ссылка успешно отправлена чужому боту.")
+
         except Exception as e:
             print(f"[LOG ERROR] Ошибка при взаимодействии с ботом: {e}")
             await event.reply(f"Ошибка при отправке: {e}")
-
+            
 # Исправленный перехват ответа
 @user_client.on(events.NewMessage)
 async def handle_key_response(event):
