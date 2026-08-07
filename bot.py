@@ -49,14 +49,8 @@ async def handle_user_link(event):
 async def handle_key_response(event):
     if pending_requests:
         target_user = pending_requests.pop(0)
-        text = event.text
-        if "Как использовать:" in text and "http" not in text:
-            await bot_client.send_message(
-                target_user, 
-                "❌ Не удалось получить ключ. Попробуй отправь ссылку ещё раз."
-            )
-        else:
-            await bot_client.send_message(target_user, text)
+        # Отправляем ответ стороннего бота пользователю как есть
+        await bot_client.send_message(target_user, event.text)
 
 async def main():
     print("✅ Подключаем аккаунт...")
