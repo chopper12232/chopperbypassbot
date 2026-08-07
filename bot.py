@@ -43,7 +43,7 @@ async def handle_user_link(event):
         pending_requests.append(event.chat_id)
         await event.reply("⏳ Ищу ключ...")
         # Пересылаем ссылку в сторонний бот от имени аккаунта
-        await user_client.send_message(OTHER_BOT, f"/bypass {event.text}")
+        await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
 
 @user_client.on(events.NewMessage(chats=OTHER_BOT))
 async def handle_key_response(event):
