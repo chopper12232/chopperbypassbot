@@ -4,7 +4,7 @@ from flask import Flask
 import asyncio
 from telethon import TelegramClient, events
 
-app = Flask(name)
+app = Flask(__name__)
 
 @app.route('/')
 def home():
