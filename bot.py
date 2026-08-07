@@ -47,16 +47,23 @@ async def handle_user_link(event):
 
 @user_client.on(events.NewMessage(chats=OTHER_BOT))
 async def handle_key_response(event):
-    # Достаем текст из обычного сообщения ИЛИ из подписи к фото (caption)
+    # Берем текст или подпись под картинкой
     response_text = event.text or event.message.caption or ""
     
-    # Игнорируем инструкции
+    # Игнорируем инструкции стороннего бота
     if "Как использовать" in response_text or "Используйте" in response_text:
         return
 
-    if pending_requests and response_text:
+    # Ищем ключ, если он есть
+    if "FREE_" in response_text and pending_requests:
+        # Разбиваем строку, чтобы найти кусок с FREE_
+        # Мы берем все, что идет после FREE_, до ближайшего пробела или конца строки
+        key_part = response_text.split("FREE_")[1].split()[0]
+        final_key = "FREE_" + key_part
+        
         target_user = pending_requests.pop(0)
-        await bot_client.send_message(target_user, response_text)
+        # Отправляем пользователю ТОЛЬКО чистый ключ
+        await bot_client.send_message(target_user, final_key)
 
  
 async def main():
