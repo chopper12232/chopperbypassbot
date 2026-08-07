@@ -47,11 +47,16 @@ async def handle_user_link(event):
 
 @user_client.on(events.NewMessage(chats=OTHER_BOT))
 async def handle_key_response(event):
-    text = event.text or ""
+    # Достаем текст, даже если он пришел под картинкой (caption)
+    response_text = event.text or event.message.caption or ""
     
-    # Если сторонний бот прислал инструкцию или промежуточный статус — игнорируем
-    if "Как использовать" in text or "Используйте" in text:
+    # Пропускаем инструкции
+    if "Как использовать" in response_text or "Используйте" in response_text:
         return
+
+    if pending_requests and response_text:
+        target_user = pending_requests.pop(0)
+        await bot_client.send_message(target_user, response_text)
 
     # Если пришёл реальный ключ или результат
     if pending_requests:
