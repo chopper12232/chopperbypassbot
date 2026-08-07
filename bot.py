@@ -2,19 +2,23 @@ import asyncio
 from telethon import TelegramClient, events
 from flask import Flask
 import threading
+import re
+import os
 
+# --- Flask для удержания хостинга ---
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot is running!"
+    return "Bot is alive!"
 
 def run_flask():
-    app.run(host="0.0.0.0", port=8080, debug=False, use_reloader=False)
+    # Запускаем на порту 8080, как и раньше
+    app.run(host="0.0.0.0", port=8080)
 
-# Запускаем Flask в отдельном потоке СРАЗУ
-flask_thread = threading.Thread(target=run_flask, daemon=True)
-flask_thread.start()
+# Запускаем Flask в отдельном потоке ДО всего остального
+threading.Thread(target=run_flask, daemon=True).start()
+print("Flask запущен в фоне.")
 # Данные для авторизации
 API_ID = 2496
 API_HASH = "8da85b0d5bfe62527e5b244c209159c3"
