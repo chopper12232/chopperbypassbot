@@ -89,5 +89,5 @@ async def main():
     print("Всё запущено, клиенты активны.")
     await asyncio.gather(user_client.run_until_disconnected(), bot_client.run_until_disconnected())
 
-if __name == "__main__":
+if __name__ == "__main__":
     asyncio.run(main())
