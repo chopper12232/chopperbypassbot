@@ -22,8 +22,6 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PHONE = os.environ.get("PHONE", "")
 
 OTHER_BOT = "getkey"
-
-# Переменная для хранения ID пользователя, который последним запросил ключ
 last_user_id = None
 
 user_client = TelegramClient("user_session", API_ID, API_HASH)
@@ -34,45 +32,45 @@ async def start_handler(event):
     if event.is_private:
         await event.respond("Привет! Пришли ссылку, я пришлю ключ.")
 
-# 1. Пользователь пишет твоему боту
 @bot_client.on(events.NewMessage)
 async def handle_user_link(event):
     global last_user_id
     if event.is_private and event.text and "http" in event.text:
         last_user_id = event.chat_id
+        print(f"[LOG] Получена ссылка от пользователя ID: {last_user_id}")
         await event.reply("Ищу ключ...")
         try:
-            # Шлем с вирт-аккаунта запрос чужому боту
             await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
-            print(f"Запрос ушел чужому боту для пользователя {last_user_id}")
+            print(f"[LOG] Успешно отправлено чужому боту от имени вирт-аккаунта.")
         except Exception as e:
-            print(f"Ошибка отправки: {e}")
+            print(f"[LOG ERROR] Ошибка отправки чужому боту: {e}")
             await event.reply(f"Ошибка при отправке: {e}")
 
-# 2. Вирт-аккаунт получает ответ в ЛС от чужого бота
 @user_client.on(events.NewMessage)
 async def handle_key_response(event):
     global last_user_id
     if event.is_private:
         sender = await event.get_sender()
-        # Проверяем, что это ответ именно от целевого бота
+        # Выводим в лог вообще каждое входящее сообщение в ЛС вирт-аккаунта, чтобы проверить, видит ли он его
+        if sender:
+            print(f"[LOG USER_CLIENT] Новое сообщение в ЛС от: {getattr(sender, 'username', 'unknown')} | Текст: {event.text[:40]}")
+            
         if sender and sender.bot and (sender.username and sender.username.lower() == OTHER_BOT):
-            print(f"Вирт-аккаунт поймал ответ: {event.text[:30]}...")
+            print(f"[LOG] ПОЙМАЛ ОТВЕТ ОТ ЦЕЛЕВОГО БОТА!")
             if last_user_id:
                 try:
-                    # Пересылаем полученный ключ обратно пользователю через твоего бота
                     await bot_client.send_message(last_user_id, event.text)
-                    print(f"Ключ успешно переслан пользователю {last_user_id}!")
-                    last_user_id = None  # Сбрасываем ID после отправки
+                    print(f"[LOG] Ключ успешно отправлен пользователю {last_user_id}!")
+                    last_user_id = None
                 except Exception as e:
-                    print(f"Ошибка отправки пользователю: {e}")
+                    print(f"[LOG ERROR] Не удалось отправить ключ пользователю: {e}")
             else:
-                print("Получен ключ, но получатель (last_user_id) не найден.")
+                print("[LOG WARNING] Ключ получен, но last_user_id пуст (никто не запрашивал или сбросился).")
 
 async def main():
     await user_client.start(phone=PHONE)
     await bot_client.start(bot_token=BOT_TOKEN)
-    print("Всё запущено и работает!")
+    print("Всё запущено, клиенты активны.")
     await asyncio.gather(user_client.run_until_disconnected(), bot_client.run_until_disconnected())
 
 if __name__ == "__main__":
