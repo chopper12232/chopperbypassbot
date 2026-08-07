@@ -4,7 +4,7 @@ from flask import Flask
 import asyncio
 from telethon import TelegramClient, events
 
-app = Flask(name)
+app = Flask(__name__)
 
 @app.route('/')
 def home():
@@ -61,5 +61,5 @@ async def main():
     print("Бот запущен!")
     await asyncio.gather(user_client.run_until_disconnected(), bot_client.run_until_disconnected())
 
-if name == "main":
+if __name__ == "__main__":
     asyncio.run(main())
