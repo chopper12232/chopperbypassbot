@@ -4,7 +4,7 @@ from flask import Flask
 import asyncio
 from telethon import TelegramClient, events
 
-app = Flask(__name__)
+app = Flask(name)
 
 @app.route('/')
 def home():
@@ -21,8 +21,10 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PHONE = os.environ.get("PHONE", "")
 
-OTHER_BOT = "getkey"  # Юзернейм чужого бота
-pending_requests = []
+OTHER_BOT = "getkey"
+
+# Очередь для хранения ID пользователей, которые ждут ключ
+user_queue = []
 
 user_client = TelegramClient("user_session", API_ID, API_HASH)
 bot_client = TelegramClient("bot_session", API_ID, API_HASH)
@@ -32,33 +34,46 @@ async def start_handler(event):
     if event.is_private:
         await event.respond("Привет! Пришли ссылку, я пришлю ключ.")
 
+# 1. Принимаем ссылку от пользователя в твоем боте
 @bot_client.on(events.NewMessage)
 async def handle_user_link(event):
     if event.is_private and event.text and "http" in event.text:
-        pending_requests.append(event.chat_id)
+        user_queue.append(event.chat_id)
         await event.reply("Ищу ключ...")
         try:
-            await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
-            print("Ссылка успешно отправлена чужому боту!")
+            # Шлем ссылку чужому боту с вирт-аккаунта
+            await user_client.send_message(OTHER_BOT, event.text)
+            print(f"Ссылка от пользователя {event.chat_id} ушла чужому боту.")
         except Exception as e:
-            print(f"Ошибка отправки: {e}")
+            print(f"Ошибка отправки чужому боту: {e}")
+            if event.chat_id in user_queue:
+                user_queue.remove(event.chat_id)
             await event.reply(f"Ошибка при отправке: {e}")
 
+# 2. Ловим ответ в ЛС вирт-аккаунта и сразу кидаем пользователю
 @user_client.on(events.NewMessage)
 async def handle_key_response(event):
-    # Ловим сообщения из ЛС от любых ботов, если мы ждем ключ
-    if event.is_private and pending_requests:
+    if event.is_private:
         sender = await event.get_sender()
-        # Проверяем, что сообщение от бота (просто на всякий случай)
-        if sender and sender.bot:
-            print(f"Получен ответ от бота, пересылаю пользователю...")
-            target_user = pending_requests.pop(0)
-            await bot_client.send_message(target_user, event.text)
+        if sender and sender.bot and (sender.username and sender.username.lower() == OTHER_BOT):
+            print(f"Получен ответ от чужого бота: {event.text[:30]}...")
+            
+            # Проверяем, есть ли кто-то в очереди ожидания
+            if user_queue:
+                target_user = user_queue.pop(0)
+                try:
+                    # Отправляем ключ пользователю через твоего бота
+                    await bot_client.send_message(target_user, event.text)
+                    print(f"Ключ успешно доставлен пользователю {target_user}!")
+                except Exception as e:
+                    print(f"Ошибка при отправке ключа пользователю: {e}")
+            else:
+                print("Получен ключ, но очередь пуста.")
 
 async def main():
     await user_client.start(phone=PHONE)
     await bot_client.start(bot_token=BOT_TOKEN)
-    print("Бот запущен!")
+    print("Бот и вирт-аккаунт успешно запущены и слушают!")
     await asyncio.gather(user_client.run_until_disconnected(), bot_client.run_until_disconnected())
 
 if __name__ == "__main__":
