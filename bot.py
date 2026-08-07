@@ -54,14 +54,14 @@ async def handle_key_response(event):
     if not response_text:
         return
 
-    if "Как использовать" in response_text or "Используйте" in responsetext:
+    if "Как использовать" in response_text or "Используйте" in response_text:
         return
 
     if "FREE" in response_text and pending_requests:
         try:
-responsetext.split("FREE")[1]
+part = response_text.split("FREE_")[1]
             key_raw = part.split("Потребовалось")[0]
-            finalkey = "FREE" + key_raw.strip()
+            final_key = "FREE_" + key_raw.strip()
 
             target_user = pending_requests.pop(0)
             await bot_client.send_message(target_user, final_key)
