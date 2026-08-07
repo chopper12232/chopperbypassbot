@@ -21,10 +21,10 @@ API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PHONE = os.environ.get("PHONE", "")
 
-OTHER_BOT = "getkey"
+OTHER_BOT = "robloxbypass"
 
-# Очередь для хранения ID пользователей, которые ждут ключ
-user_queue = []
+# Переменная для хранения ID пользователя, который последним запросил ключ
+last_user_id = None
 
 user_client = TelegramClient("user_session", API_ID, API_HASH)
 bot_client = TelegramClient("bot_session", API_ID, API_HASH)
@@ -34,46 +34,45 @@ async def start_handler(event):
     if event.is_private:
         await event.respond("Привет! Пришли ссылку, я пришлю ключ.")
 
-# 1. Принимаем ссылку от пользователя в твоем боте
+# 1. Пользователь пишет твоему боту
 @bot_client.on(events.NewMessage)
 async def handle_user_link(event):
+    global last_user_id
     if event.is_private and event.text and "http" in event.text:
-        user_queue.append(event.chat_id)
+        last_user_id = event.chat_id
         await event.reply("Ищу ключ...")
         try:
-            # Шлем ссылку чужому боту с вирт-аккаунта
-            await user_client.send_message(OTHER_BOT, event.text)
-            print(f"Ссылка от пользователя {event.chat_id} ушла чужому боту.")
+            # Шлем с вирт-аккаунта запрос чужому боту
+            await user_client.send_message(OTHER_BOT, "/bypass " + event.text)
+            print(f"Запрос ушел чужому боту для пользователя {last_user_id}")
         except Exception as e:
-            print(f"Ошибка отправки чужому боту: {e}")
-            if event.chat_id in user_queue:
-                user_queue.remove(event.chat_id)
+            print(f"Ошибка отправки: {e}")
             await event.reply(f"Ошибка при отправке: {e}")
 
-# 2. Ловим ответ в ЛС вирт-аккаунта и сразу кидаем пользователю
+# 2. Вирт-аккаунт получает ответ в ЛС от чужого бота
 @user_client.on(events.NewMessage)
 async def handle_key_response(event):
+    global last_user_id
     if event.is_private:
         sender = await event.get_sender()
+        # Проверяем, что это ответ именно от целевого бота
         if sender and sender.bot and (sender.username and sender.username.lower() == OTHER_BOT):
-            print(f"Получен ответ от чужого бота: {event.text[:30]}...")
-            
-            # Проверяем, есть ли кто-то в очереди ожидания
-            if user_queue:
-                target_user = user_queue.pop(0)
+            print(f"Вирт-аккаунт поймал ответ: {event.text[:30]}...")
+            if last_user_id:
                 try:
-                    # Отправляем ключ пользователю через твоего бота
-                    await bot_client.send_message(target_user, event.text)
-                    print(f"Ключ успешно доставлен пользователю {target_user}!")
+                    # Пересылаем полученный ключ обратно пользователю через твоего бота
+                    await bot_client.send_message(last_user_id, event.text)
+                    print(f"Ключ успешно переслан пользователю {last_user_id}!")
+                    last_user_id = None  # Сбрасываем ID после отправки
                 except Exception as e:
-                    print(f"Ошибка при отправке ключа пользователю: {e}")
+                    print(f"Ошибка отправки пользователю: {e}")
             else:
-                print("Получен ключ, но очередь пуста.")
+                print("Получен ключ, но получатель (last_user_id) не найден.")
 
 async def main():
     await user_client.start(phone=PHONE)
     await bot_client.start(bot_token=BOT_TOKEN)
-    print("Бот и вирт-аккаунт успешно запущены и слушают!")
+    print("Всё запущено и работает!")
     await asyncio.gather(user_client.run_until_disconnected(), bot_client.run_until_disconnected())
 
 if __name__ == "__main__":
