@@ -71,39 +71,29 @@ async def handle_key_response(event):
     global last_user_id
     if event.is_private:
         sender = await event.get_sender()
-        # Проверяем, что сообщение от нужного бота
         if sender and sender.username == OTHER_BOT:
-            # Пытаемся получить текст из самого сообщения
             message_text = event.text
-            
-            # Если основной текст пустой или короткий, пробуем достать из кнопок
             if not message_text or len(message_text) < 10:
                 if event.reply_markup:
                     for row in event.reply_markup.rows:
                         for button in row.buttons:
-                            # Часто боты прячут результат в callback_data или текст кнопки
                             message_text += f"\nКнопка: {button.text}"
             
             print(f"[LOG] Пойман ответ от бота! Текст: {message_text}")
             
             if last_user_id:
-             # ... (начало функции остается прежним)
-            import re
-            key_match = re.search(r'FREE_[a-zA-Z0-9]+', message_text)
-            
-            if key_match:
-                final_key = key_match.group(0)
-                # ТВОЙ ДИЗАЙН (меняй смайлики как хочешь):
-                custom_message = (
-                    "🔥 Успешный обход!\n\n"
-                    "🔑 Твой ключ:\n"
-                    f"{final_key}\n\n"
-                    "🚀 *Ваш сервис*"
-                )
-                await bot_client.send_message(last_user_id, custom_message, parse_mode='md')
-            else:
-                # Если вдруг формат поменяется и ключ не найдет, отправляем оригинал
-                await bot_client.send_message(last_user_id, "Вот ответ:\n" + message_text)
+                import re
+                key_match = re.search(r'FREE_[a-zA-Z0-9]+', message_text)
+                if key_match:
+                    final_key = key_match.group(0)
+                    custom_message = (
+                        "🔥 Успешный обход!\n\n"
+                        "🔑 Твой ключ:\n"
+                        f"{final_key}\n\n"
+                        "🚀 *Ваш сервис*"
+                    )
+                    await bot_client.send_message(last_user_id, custom_message, parse_mode='md')
+                    
 async def main():
     await user_client.start(phone=PHONE)
     await bot_client.start(bot_token=BOT_TOKEN)
