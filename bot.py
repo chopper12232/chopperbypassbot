@@ -107,9 +107,14 @@ async def handle_key_response(event):
                 last_user_id = None
               
 async def main():
+    print("Запуск клиента...")
     await user_client.start(phone=PHONE)
     print("Всё запущено, клиент активен.")
     await asyncio.gather(user_client.run_until_disconnected())
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import asyncio
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        pass
