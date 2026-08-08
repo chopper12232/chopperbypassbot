@@ -36,8 +36,9 @@ async def handle_user_request(event):
         user_id = event.chat_id
         url = event.text.strip()
         
+        # Кастомный эмодзи ссылки: 5278305362703835500
         status_msg = await event.reply(
-            "🔗 <b>Статус:</b> <i>Обрабатываю ссылку...</i>",
+            '<emoji id="5278305362703835500">🔗</emoji> <b>Статус:</b> <i>Обрабатываю ссылку...</i>',
             parse_mode="html"
         )
         
@@ -70,23 +71,29 @@ async def handle_user_request(event):
 @user_client.on(events.NewMessage(incoming=True))
 async def handle_key_response(event):
     if event.is_private and event.sender_id and (await event.get_sender()).username == OTHER_BOT:
-        message_text = event.text or ""
+        message_text = event.raw_text or event.text or ""
         if event.reply_markup and not message_text:
             for row in event.reply_markup.rows:
                 for button in row.buttons:
                     message_text += f"\n{button.text}"
 
-        print(f"[LOG] Ключ получен: {message_text}")
+        print(f"[LOG] Ответ от бота: {message_text}")
         
         if pending_requests:
-            key_match = re.search(r"FREE_[a-zA-Z0-9]+", message_text)
+            key_match = re.search(r"FREE_[A-Za-z0-9_]+", message_text)
             req = pending_requests.pop(0)
             user_id = req['user_id']
             status_msg = req['msg_obj']
 
             if key_match:
                 final_key = key_match.group(0)
-                new_text = f"🔐 <b>Статус: Успешный обход!</b>\n\n<code>{final_key}</code>\n\n⭐️ <b>Ваш сервис</b>"
+                # Кастомные эмодзи: Замок (5278602437001767574), Щит (5276262671962892944), Звезда (5206476089127372379)
+                new_text = (
+                    f'<emoji id="5278602437001767574">🔐</emoji> <b>Успешный байпасс</b>\n\n'
+                    f'<emoji id="5276262671962892944">🛡</emoji> <b>Твой ключ:</b>\n'
+                    f'<code>{final_key}</code>\n\n'
+                    f'<emoji id="5206476089127372379">⭐️</emoji> <b>Ваш ChopperScripts</b>'
+                )
                 await bot_client.edit_message(user_id, status_msg.id, new_text, parse_mode="html")
             else:
                 await bot_client.edit_message(user_id, status_msg.id, "❌ <b>Статус:</b> Ключ не найден.", parse_mode="html")
