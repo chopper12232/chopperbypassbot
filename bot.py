@@ -96,7 +96,7 @@ async def handle_key_response(event):
                         custom_message = (
                             '<tg-emoji emoji-id="5278602437001767574">🔐</tg-emoji>'
                             " <b>Успешный обход!</b>\n\n<code>"
-[08.08.2026 17:18] Sophie Leclair: f"{final_key}</code>\n\n"
+                            f"{final_key}</code>\n\n"
                             '<tg-emoji emoji-id="5278305362703835500">🔗</tg-emoji>'
                             " <i>Обрабатываю ссылку...</i>\n<tg-emoji"
                             ' emoji-id="5206476089127372379">⭐️</tg-emoji> <b>Ваш сервис</b>'
