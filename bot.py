@@ -28,13 +28,17 @@ async def handle_user_request(event):
     if event.is_private and event.text and "http" in event.text:
         user_id = event.chat_id
         url = event.text.strip()
-        status_msg = await event.reply("🔍 Обрабатываю...")
+        
+        # Красивый статус с эмодзи ссылки
+        status_msg = await event.reply(
+            '<emoji id="5278305362703835500">🔗</emoji> <b>Статус:</b> <i>Обрабатываю ссылку...</i>',
+            parse_mode="html"
+        )
         pending_requests.append({'user_id': user_id, 'msg_obj': status_msg})
         
         await user_client.send_message(OTHER_BOT, "/bypass")
         await asyncio.sleep(2)
         
-        # Кликаем кнопки, если есть
         msg = await user_client.get_messages(OTHER_BOT, limit=1)
         if msg and msg[0].buttons:
             await msg[0].click(0)
@@ -42,18 +46,15 @@ async def handle_user_request(event):
         
         await user_client.send_message(OTHER_BOT, url)
 
-# 2. УНИВЕРСАЛЬНЫЙ СЛУШАТЕЛЬ (Новые сообщения И Редактирования)
+# 2. УНИВЕРСАЛЬНЫЙ СЛУШАТЕЛЬ ОТВЕТА
 @user_client.on(events.MessageEdited(chats=OTHER_BOT))
 @user_client.on(events.NewMessage(chats=OTHER_BOT))
 async def handle_all_updates(event):
-    # Собираем текст из всего, что есть
-    msg_text = event.raw_text or ""
+    msg_text = event.raw_text or event.text or ""
     if event.reply_markup:
         for row in event.reply_markup.rows:
             for btn in row.buttons:
                 msg_text += f" {btn.text}"
-    
-    print(f"[DEBUG] От бота пришло: {msg_text[:100]}...") # Лог в консоль Render
     
     key_match = re.search(r"FREE_[A-Za-z0-9_]+", msg_text)
     
@@ -61,11 +62,18 @@ async def handle_all_updates(event):
         final_key = key_match.group(0)
         req = pending_requests.pop(0)
         
+        # Полный текст и премиум-эмодзи, как на первом скрине
         new_text = (
-            f'<emoji id="5278602437001767574">🔐</emoji> <b>Успешно!</b>\n\n'
-            f'Ключ: <code>{final_key}</code>'
+            f'<emoji id="5278602437001767574">🔐</emoji> <b>Успешный обход!</b>\n\n'
+            f'<emoji id="5276262671962892944">🛡</emoji> <b>Твой ключ:</b>\n'
+            f'<code>{final_key}</code>\n\n'
+            f'<emoji id="5278305362703835500">🔗</emoji> <i>Обрабатываю ссылку...</i>\n'
+            f'<emoji id="5206476089127372379">⭐️</emoji> <b>Ваш сервис</b>'
         )
-        await bot_client.edit_message(req['user_id'], req['msg_obj'].id, new_text, parse_mode="html")
+        try:
+            await bot_client.edit_message(req['user_id'], req['msg_obj'].id, new_text, parse_mode="html")
+        except Exception as e:
+            print(f"[ERROR EDIT] {e}")
 
 async def main():
     await user_client.start()
