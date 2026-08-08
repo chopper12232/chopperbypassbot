@@ -19,27 +19,15 @@ threading.Thread(target=run_flask, daemon=True).start()
 API_ID = 2040
 API_HASH = "b18441a1ff607e10a989891a5462e627"
 OTHER_BOT = "KrevetkascriptsBy_Bot"
-# Укажи здесь юзернейм твоего бота на Render (без @), которому пишут пользователи
-MY_BOT_USERNAME = "Chopperbypassbot" 
+MY_BOT_USERNAME = "chopperbypassbot" 
 
 user_client = TelegramClient('user_session', API_ID, API_HASH)
 users_in_process = {}
 
 @user_client.on(events.NewMessage(incoming=True))
-async def handle_user_link(event):
-    # Ловим сообщения, которые приходят ТВОЕМУ боту от пользователей
-    sender = await event.get_sender()
-    if sender and sender.username == MY_BOT_USERNAME and event.text and "http" in event.text:
-        # Извлекаем ID пользователя, который написал твоему боту (пересылаем в чат с твоим ботом, чтобы понять кому отвечать)
-        # Для простоты юзербот будет отвечать в чат, откуда пришла ссылка, если это ЛС с твоим ботом
-        pass
-
-# Перепишем логику под обработку сообщений из чата с твоим ботом
-@user_client.on(events.NewMessage(incoming=True))
 async def handle_bot_interaction(event):
-    # Если сообщение пришло от твоего бота и там есть ссылка
     sender = await event.get_sender()
-    if sender and sender.username == MY_BOT_USERNAME and event.text and "http" in event.text:
+    if sender and sender.username and sender.username.lower() == MY_BOT_USERNAME.lower() and event.text and "http" in event.text:
         chat_id = event.chat_id
         print(f"[LOG] Получена ссылка от пользователя через твоего бота: {event.text}")
         try:
@@ -63,7 +51,6 @@ async def handle_bot_interaction(event):
             await asyncio.sleep(1)
             await user_client.send_message(OTHER_BOT, event.text)
 
-            # Сохраняем, какому пользователю отправлять ответ
             users_in_process[chat_id] = True
 
             await event.reply(
@@ -78,7 +65,7 @@ async def handle_bot_interaction(event):
 async def handle_key_response(event):
     if event.is_private:
         sender = await event.get_sender()
-        if sender and sender.username == OTHER_BOT:
+        if sender and sender.username and sender.username.lower() == OTHER_BOT.lower():
             message_text = event.text or ""
             if event.reply_markup and not message_text:
                 for row in event.reply_markup.rows:
@@ -87,7 +74,6 @@ async def handle_key_response(event):
 
             print(f"[LOG] Пойман ответ от чужого бота: {message_text}")
             
-            # Отправляем ключ обратно в чат с твоим ботом, если там есть активный процесс
             if users_in_process:
                 key_match = re.search(r"FREE_[a-zA-Z0-9]+", message_text)
                 for chat_id in list(users_in_process.keys()):
