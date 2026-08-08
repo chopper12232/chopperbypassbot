@@ -19,47 +19,47 @@ threading.Thread(target=run_flask, daemon=True).start()
 API_ID = 2040
 API_HASH = "b18441a1ff607e10a989891a5462e627"
 OTHER_BOT = "KrevetkascriptsBy_Bot"
-MY_BOT_USERNAME = "chopperbypassbot" 
 
 user_client = TelegramClient('user_session', API_ID, API_HASH)
 users_in_process = {}
 
 @user_client.on(events.NewMessage(incoming=True))
 async def handle_bot_interaction(event):
-    sender = await event.get_sender()
-    if sender and sender.username and sender.username.lower() == MY_BOT_USERNAME.lower() and event.text and "http" in event.text:
-        chat_id = event.chat_id
-        print(f"[LOG] Получена ссылка от пользователя через твоего бота: {event.text}")
-        try:
-            await user_client.send_message(OTHER_BOT, "/bypass")
-            await asyncio.sleep(1.5)
+    if event.is_private:
+        print(f"[DEBUG ЛС] От кого-то пришло сообщение: {event.text}")
+        if event.text and "http" in event.text:
+            chat_id = event.chat_id
+            print(f"[LOG] Найдена ссылка в ЛС, запускаю обход: {event.text}")
+            try:
+                await user_client.send_message(OTHER_BOT, "/bypass")
+                await asyncio.sleep(1.5)
 
-            clicked = False
-            async for message in user_client.iter_messages(OTHER_BOT, limit=3):
-                if message.buttons:
-                    await message.click(0)
-                    clicked = True
-                    break
-
-            if not clicked:
-                await asyncio.sleep(1)
+                clicked = False
                 async for message in user_client.iter_messages(OTHER_BOT, limit=3):
                     if message.buttons:
                         await message.click(0)
+                        clicked = True
                         break
 
-            await asyncio.sleep(1)
-            await user_client.send_message(OTHER_BOT, event.text)
+                if not clicked:
+                    await asyncio.sleep(1)
+                    async for message in user_client.iter_messages(OTHER_BOT, limit=3):
+                        if message.buttons:
+                            await message.click(0)
+                            break
 
-            users_in_process[chat_id] = True
+                await asyncio.sleep(1)
+                await user_client.send_message(OTHER_BOT, event.text)
 
-            await event.reply(
-                '<tg-emoji emoji-id="5278305362703835500">🔗</tg-emoji>'
-                " <b>Ссылка обрабатывается!</b>",
-                parse_mode="html"
-            )
-        except Exception as e:
-            print(f"[LOG ERROR] {e}")
+                users_in_process[chat_id] = True
+
+                await event.reply(
+                    '<tg-emoji emoji-id="5278305362703835500">🔗</tg-emoji>'
+                    " <b>Ссылка обрабатывается!</b>",
+                    parse_mode="html"
+                )
+            except Exception as e:
+                print(f"[LOG ERROR] {e}")
 
 @user_client.on(events.NewMessage)
 async def handle_key_response(event):
