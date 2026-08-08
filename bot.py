@@ -16,8 +16,8 @@ def run_flask():
 
 threading.Thread(target=run_flask, daemon=True).start()
 
-API_ID = 2496
-API_HASH = "8da85b0d5bf625275b244c209159c3"
+API_ID = 21724
+API_HASH = "3e0cb5efcd52300aec5994fdfc5bdc16"
 OTHER_BOT = "KrevetkascriptsBy_Bot"
 last_user_id = None
 
