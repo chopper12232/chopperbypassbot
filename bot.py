@@ -10,98 +10,67 @@ app = Flask(__name__)
 def home():
     return "Bot is alive!"
 
-def run_flask():
-    app.run(host="0.0.0.0", port=8080)
+threading.Thread(target=lambda: app.run(host="0.0.0.0", port=8080), daemon=True).start()
 
-threading.Thread(target=run_flask, daemon=True).start()
-
-# Данные для юзербота (британский аккаунт)
 API_ID = 2040
 API_HASH = "b18441a1ff607e10a989891a5462e627"
 OTHER_BOT = "KrevetkascriptsBy_Bot"
-
-# ТОКЕН ТВОЕГО БОТА
 BOT_TOKEN = "7597650548:AAFFDOmUgNXqGz7VBNcW_xHj315mZq589QQ"
 
-# Инициализация двух клиентов
 user_client = TelegramClient('user_session', API_ID, API_HASH)
 bot_client = TelegramClient('bot_session', API_ID, API_HASH)
 
 pending_requests = [] 
 
-# 1. ОСНОВНОЙ БОТ (Общение с пользователями)
+# 1. ОБРАБОТКА ССЫЛКИ ОТ ЮЗЕРА
 @bot_client.on(events.NewMessage(incoming=True))
 async def handle_user_request(event):
     if event.is_private and event.text and "http" in event.text:
         user_id = event.chat_id
         url = event.text.strip()
-        
-        # Кастомный эмодзи ссылки: 5278305362703835500
-        status_msg = await event.reply(
-            '<emoji id="5278305362703835500">🔗</emoji> <b>Статус:</b> <i>Обрабатываю ссылку...</i>',
-            parse_mode="html"
-        )
-        
+        status_msg = await event.reply("🔍 Обрабатываю...")
         pending_requests.append({'user_id': user_id, 'msg_obj': status_msg})
         
-        try:
-            await user_client.send_message(OTHER_BOT, "/bypass")
-            await asyncio.sleep(1.5)
-
-            clicked = False
-            async for message in user_client.iter_messages(OTHER_BOT, limit=3):
-                if message.buttons:
-                    await message.click(0)
-                    clicked = True
-                    break
-
-            if not clicked:
-                await asyncio.sleep(1)
-                async for message in user_client.iter_messages(OTHER_BOT, limit=3):
-                    if message.buttons:
-                        await message.click(0)
-                        break
-
-            await asyncio.sleep(1)
-            await user_client.send_message(OTHER_BOT, url)
-        except Exception as e:
-            print(f"[ERROR] {e}")
-
-# 2. ЮЗЕРБОТ (Скрытый курьер)
-@user_client.on(events.NewMessage(incoming=True))
-async def handle_key_response(event):
-    if event.is_private and event.sender_id and (await event.get_sender()).username == OTHER_BOT:
-        message_text = event.raw_text or event.text or ""
-        if event.reply_markup and not message_text:
-            for row in event.reply_markup.rows:
-                for button in row.buttons:
-                    message_text += f"\n{button.text}"
-
-        print(f"[LOG] Ответ от бота: {message_text}")
+        await user_client.send_message(OTHER_BOT, "/bypass")
+        await asyncio.sleep(2)
         
-        if pending_requests:
-            key_match = re.search(r"FREE_[A-Za-z0-9_]+", message_text)
-            req = pending_requests.pop(0)
-            user_id = req['user_id']
-            status_msg = req['msg_obj']
+        # Кликаем кнопки, если есть
+        msg = await user_client.get_messages(OTHER_BOT, limit=1)
+        if msg and msg[0].buttons:
+            await msg[0].click(0)
+            await asyncio.sleep(2)
+        
+        await user_client.send_message(OTHER_BOT, url)
 
-            if key_match:
-                final_key = key_match.group(0)
-                # Кастомные эмодзи: Замок (5278602437001767574), Щит (5276262671962892944), Звезда (5206476089127372379)
-                new_text = (
-                    f'<emoji id="5278602437001767574">🔐</emoji> <b>Успешный байпасс</b>\n\n'
-                    f'<emoji id="5276262671962892944">🛡</emoji> <b>Твой ключ:</b>\n'
-                    f'<code>{final_key}</code>\n\n'
-                    f'<emoji id="5206476089127372379">⭐️</emoji> <b>Ваш ChopperScripts</b>'
-                )
-                await bot_client.edit_message(user_id, status_msg.id, new_text, parse_mode="html")
-            else:
-                await bot_client.edit_message(user_id, status_msg.id, "❌ <b>Статус:</b> Ключ не найден.", parse_mode="html")
+# 2. УНИВЕРСАЛЬНЫЙ СЛУШАТЕЛЬ (Новые сообщения И Редактирования)
+@user_client.on(events.MessageEdited(chats=OTHER_BOT))
+@user_client.on(events.NewMessage(chats=OTHER_BOT))
+async def handle_all_updates(event):
+    # Собираем текст из всего, что есть
+    msg_text = event.raw_text or ""
+    if event.reply_markup:
+        for row in event.reply_markup.rows:
+            for btn in row.buttons:
+                msg_text += f" {btn.text}"
+    
+    print(f"[DEBUG] От бота пришло: {msg_text[:100]}...") # Лог в консоль Render
+    
+    key_match = re.search(r"FREE_[A-Za-z0-9_]+", msg_text)
+    
+    if key_match and pending_requests:
+        final_key = key_match.group(0)
+        req = pending_requests.pop(0)
+        
+        new_text = (
+            f'<emoji id="5278602437001767574">🔐</emoji> <b>Успешно!</b>\n\n'
+            f'Ключ: <code>{final_key}</code>'
+        )
+        await bot_client.edit_message(req['user_id'], req['msg_obj'].id, new_text, parse_mode="html")
 
 async def main():
-    print("Система запущена...")
     await user_client.start()
     await bot_client.start(bot_token=BOT_TOKEN)
+    print("--- БОТ ЗАПУЩЕН ---")
     await asyncio.gather(user_client.run_until_disconnected(), bot_client.run_until_disconnected())
 
 if __name__ == "__main__":
